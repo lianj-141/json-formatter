@@ -373,11 +373,11 @@
                 <div class="panel-header">
                     <span>格式化结果</span>
                     <div class="controls">
-                        <button class="icon-btn" onclick="minifyJSON()" title="压缩 JSON">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-                                <path d="m15 9-6 6"/>
-                                <path d="m9 9 6 6"/>
+                        <button class="icon-btn" onclick="toggleFormat()" title="压缩 JSON" id="formatBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 4l6 6 6-6"/>
+                                <path d="M6 12h12"/>
+                                <path d="M6 20l6-6 6 6"/>
                             </svg>
                         </button>
                         <button class="icon-btn" onclick="clearInput()" title="清空输入">
@@ -407,6 +407,8 @@
     </div>
 
     <script>
+        let isFormatted = true; // 跟踪当前状态：true为格式化，false为压缩
+
         function formatJSON() {
             const input = document.getElementById('input').value;
             const output = document.getElementById('output');
@@ -428,10 +430,11 @@
             }
         }
 
-        function minifyJSON() {
+        function toggleFormat() {
             const input = document.getElementById('input').value;
             const output = document.getElementById('output');
             const message = document.getElementById('message');
+            const button = document.getElementById('formatBtn');
             
             if (!input.trim()) {
                 showMessage('请输入 JSON 数据', 'error');
@@ -440,18 +443,56 @@
 
             try {
                 const json = JSON.parse(input);
-                const minified = JSON.stringify(json);
-                output.textContent = minified;
-                showMessage('JSON 压缩成功！', 'success');
+                
+                if (isFormatted) {
+                    // 当前是格式化状态，切换到压缩状态
+                    const minified = JSON.stringify(json);
+                    output.textContent = minified;
+                    isFormatted = false;
+                    showMessage('JSON 压缩成功！', 'success');
+                } else {
+                    // 当前是压缩状态，切换到格式化状态
+                    const formatted = JSON.stringify(json, null, 2);
+                    output.innerHTML = syntaxHighlight(formatted);
+                    isFormatted = true;
+                    showMessage('JSON 格式化成功！', 'success');
+                }
+                
+                updateButtonState();
             } catch (e) {
                 showMessage('JSON 格式错误: ' + e.message, 'error');
                 output.textContent = '';
             }
         }
 
+        function updateButtonState() {
+            const button = document.getElementById('formatBtn');
+            const svg = button.querySelector('svg');
+            
+            if (isFormatted) {
+                // 当前是格式化状态，按钮显示"压缩"操作
+                button.title = '压缩 JSON';
+                svg.innerHTML = `
+                    <path d="M6 4l6 6 6-6"/>
+                    <path d="M6 12h12"/>
+                    <path d="M6 20l6-6 6 6"/>
+                `;
+            } else {
+                // 当前是压缩状态，按钮显示"格式化"操作
+                button.title = '格式化 JSON';
+                svg.innerHTML = `
+                    <path d="M6 10l6-6 6 6"/>
+                    <path d="M6 12h12"/>
+                    <path d="M6 14l6 6 6-6"/>
+                `;
+            }
+        }
+
         function clearInput() {
             document.getElementById('input').value = '';
             document.getElementById('output').innerHTML = '';
+            isFormatted = true; // 重置为格式化状态
+            updateButtonState();
             showMessage('已清空输入', 'success');
         }
 
@@ -634,6 +675,8 @@
             
             if (!input.trim()) {
                 output.innerHTML = '';
+                isFormatted = true; // 重置为格式化状态
+                updateButtonState();
                 return;
             }
 
@@ -641,6 +684,8 @@
                 const json = JSON.parse(input);
                 const formatted = JSON.stringify(json, null, 2);
                 output.innerHTML = syntaxHighlight(formatted);
+                isFormatted = true; // 输入时保持格式化状态
+                updateButtonState();
             } catch (e) {
                 // 静默处理错误，不显示错误信息
                 output.textContent = '';
@@ -655,6 +700,8 @@
                 
                 if (!input.trim()) {
                     output.innerHTML = '';
+                    isFormatted = true; // 重置为格式化状态
+                    updateButtonState();
                     return;
                 }
 
@@ -662,6 +709,8 @@
                     const json = JSON.parse(input);
                     const formatted = JSON.stringify(json, null, 2);
                     output.innerHTML = syntaxHighlight(formatted);
+                    isFormatted = true; // 粘贴时保持格式化状态
+                    updateButtonState();
                 } catch (e) {
                     output.textContent = '';
                 }
@@ -737,6 +786,9 @@
                 isResizing = false;
             }
         });
+
+        // 初始化按钮状态
+        updateButtonState();
     </script>
 </body>
 </html>
