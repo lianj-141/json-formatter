@@ -59,17 +59,48 @@
 
         .editor-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: 38.2% 15px 1fr;
+            gap: 0;
             margin-top: 10px;
             flex: 1;
             overflow: hidden;
+        }
+        
+        .divider {
+            background: transparent;
+            cursor: col-resize;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .divider:hover::after {
+            opacity: 1;
         }
 
         @media (max-width: 768px) {
             .editor-container {
                 grid-template-columns: 1fr;
                 gap: 10px;
+            }
+            
+            .divider {
+                display: none;
             }
             
             h1 {
@@ -335,6 +366,8 @@
                     <textarea id="input" placeholder="在此粘贴或输入 JSON 数据..."></textarea>
                 </div>
             </div>
+
+            <div class="divider" id="divider"></div>
 
             <div class="editor-panel">
                 <div class="panel-header">
@@ -644,6 +677,64 @@
                         clearInput();
                         break;
                 }
+            }
+        });
+
+        // 拖动分隔条功能
+        const divider = document.getElementById('divider');
+        const container = document.querySelector('.editor-container');
+        let isResizing = false;
+        let containerWidth = 0;
+        let minPanelWidth = 200; // 最小面板宽度
+        const dividerWidth = 15; // 分隔条宽度
+
+        divider.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            containerWidth = container.offsetWidth;
+            document.body.style.cursor = 'col-resize';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const x = e.clientX - containerRect.left;
+            const leftWidth = Math.max(minPanelWidth, Math.min(x, containerWidth - minPanelWidth - dividerWidth));
+            const leftPercent = (leftWidth / containerWidth) * 100;
+            
+            container.style.gridTemplateColumns = `${leftPercent}% ${dividerWidth}px 1fr`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+            }
+        });
+
+        // 触摸支持
+        divider.addEventListener('touchstart', (e) => {
+            isResizing = true;
+            containerWidth = container.offsetWidth;
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isResizing) return;
+            
+            const touch = e.touches[0];
+            const containerRect = container.getBoundingClientRect();
+            const x = touch.clientX - containerRect.left;
+            const leftWidth = Math.max(minPanelWidth, Math.min(x, containerWidth - minPanelWidth - dividerWidth));
+            const leftPercent = (leftWidth / containerWidth) * 100;
+            
+            container.style.gridTemplateColumns = `${leftPercent}% ${dividerWidth}px 1fr`;
+        });
+
+        document.addEventListener('touchend', () => {
+            if (isResizing) {
+                isResizing = false;
             }
         });
     </script>
