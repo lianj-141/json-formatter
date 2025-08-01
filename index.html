@@ -497,18 +497,26 @@
         }
 
         function copyOutput() {
-            const output = document.getElementById('output').textContent;
+            const input = document.getElementById('input').value;
             
-            if (!output) {
+            if (!input.trim()) {
                 showMessage('没有内容可复制', 'error');
                 return;
             }
 
-            navigator.clipboard.writeText(output).then(() => {
-                showMessage('已复制到剪贴板！', 'success');
-            }).catch(err => {
-                showMessage('复制失败: ' + err.message, 'error');
-            });
+            try {
+                // 解析JSON并重新格式化，确保复制的是干净的JSON
+                const json = JSON.parse(input);
+                const cleanJSON = isFormatted ? JSON.stringify(json, null, 2) : JSON.stringify(json);
+                
+                navigator.clipboard.writeText(cleanJSON).then(() => {
+                    showMessage('已复制到剪贴板！', 'success');
+                }).catch(err => {
+                    showMessage('复制失败: ' + err.message, 'error');
+                });
+            } catch (e) {
+                showMessage('JSON 格式错误，无法复制', 'error');
+            }
         }
 
         function syntaxHighlight(json) {
